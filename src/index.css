@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  h1, h2, h3, .font-display {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+  }
+}
+
+/* Custom Leaflet Marker Styling */
+.custom-carpark-pin {
+  background: transparent;
+  border: none;
+}
+
+.carpark-marker-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 11px;
+  line-height: 1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 0 0 2px rgba(255, 255, 255, 0.9);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.carpark-marker-badge:hover {
+  transform: scale(1.15) translateY(-2px);
+  z-index: 1000 !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25), 0 0 0 3px #ffffff;
+}
+
+.marker-high {
+  background-color: #059669;
+  color: #ffffff;
+}
+
+.marker-medium {
+  background-color: #d97706;
+  color: #ffffff;
+}
+
+.marker-low {
+  background-color: #dc2626;
+  color: #ffffff;
+}
+
+.marker-full {
+  background-color: #1e293b;
+  color: #cbd5e1;
+}
+
+.marker-selected {
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
+  transform: scale(1.2) translateY(-4px);
+  box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4), 0 0 0 3px #ffffff;
+}
+
+.destination-pin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: #2563eb;
+  color: white;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4), 0 0 0 3px #ffffff;
+}
+
+.destination-pin > span {
+  transform: rotate(45deg);
+  font-size: 16px;
+}
+
+/* Hide scrollbars gracefully for horizontal category pills */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

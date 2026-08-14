@@ -1,0 +1,6 @@
+{
+  "name": "ParkSG — Singapore Smart Parking",
+  "description": "Smart parking decision engine powered by Singapore LTA DataMall real-time carpark availability, pricing estimation, and route recommendations.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
