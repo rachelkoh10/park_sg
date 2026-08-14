@@ -7,6 +7,7 @@ import { parseLtaCoordinates, normalizeLotType, normalizeAgency } from '../lta/n
 import { calculateHaversineDistance, estimateWalkingMinutes, estimateDrivingMinutes } from '../parking/distance';
 import { estimateParkingCost, defaultParkingRateProvider } from '../parking/pricing';
 import { rankCarparks, DEFAULT_RANKING_WEIGHTS } from '../parking/ranking';
+import { extractPostalCode, resolveSingaporeLocation, searchDestinationsAndPostalCodes } from '../parking/geocode';
 import { MOCK_SINGAPORE_CARPARKS, POPULAR_SINGAPORE_DESTINATIONS } from '../../data/mockCarparks';
 
 export function runAllUnitTests(): { passed: number; failed: number; results: string[] } {
@@ -87,6 +88,22 @@ export function runAllUnitTests(): { passed: number; failed: number; results: st
   assert(ranked.length > 0, 'Recommendation engine returns ranked carparks');
   assert(ranked[0].rankBadge === 'BEST OVERALL', 'Top candidate receives BEST OVERALL badge');
   assert(ranked[0].whyRecommended.length > 10, 'Generates explanatory whyRecommended reasoning');
+
+  // 6. Postal Code Extraction & Geocoding Tests
+  assert(extractPostalCode('038983') === '038983', 'Extract raw 6-digit postal code');
+  assert(extractPostalCode('Singapore 238801') === '238801', 'Extract postal code from address string');
+  assert(extractPostalCode('S(018956)') === '018956', 'Extract S-prefixed postal code');
+  assert(extractPostalCode('no digits here') === null, 'Return null for query without postal code');
+
+  const suntecResolved = resolveSingaporeLocation('038983');
+  assert(suntecResolved.latitude > 1.28 && suntecResolved.latitude < 1.30, 'Resolve Suntec 038983 to valid Marina latitude');
+  assert(suntecResolved.longitude > 103.84 && suntecResolved.longitude < 103.87, 'Resolve Suntec 038983 to valid Marina longitude');
+
+  const jurongResolved = resolveSingaporeLocation('608532');
+  assert(jurongResolved.latitude > 1.32 && jurongResolved.latitude < 1.35, 'Resolve Jurong 608532 to West district coordinates');
+
+  const sectorSuggestions = searchDestinationsAndPostalCodes('52');
+  assert(sectorSuggestions.length > 0, 'Suggest Tampines/Pasir Ris for postal sector 52');
 
   return { passed, failed, results };
 }

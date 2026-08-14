@@ -7,6 +7,8 @@ import { defaultParkingRateProvider } from './src/lib/parking/pricing';
 import { SINGAPORE_FOOD_DEALS } from './src/lib/deals/mockDeals';
 import { POPULAR_SINGAPORE_DESTINATIONS, MOCK_SINGAPORE_CARPARKS } from './src/data/mockCarparks';
 
+import { searchDestinationsAndPostalCodes, resolveSingaporeLocation, extractPostalCode } from './src/lib/parking/geocode';
+
 dotenv.config();
 
 async function startServer() {
@@ -63,18 +65,64 @@ async function startServer() {
     });
   });
 
-  // 3. Search / Geocode Destination Helper for Singapore
-  app.get('/api/parking/search', (req, res) => {
-    const query = ((req.query.q as string) || '').toLowerCase().trim();
+  // 3. Search / Geocode Destination & Postal Code Helper for Singapore
+  app.get('/api/parking/search', async (req, res) => {
+    const query = ((req.query.q as string) || '').trim();
     if (!query) {
       return res.json({ destinations: POPULAR_SINGAPORE_DESTINATIONS });
     }
 
-    const matches = POPULAR_SINGAPORE_DESTINATIONS.filter(
-      d => d.name.toLowerCase().includes(query) || d.address.toLowerCase().includes(query)
-    );
+    // Check if postal code or general query
+    const postal = extractPostalCode(query);
 
-    res.json({ destinations: matches });
+    // Try OneMap live query for real-time precise building & block geocoding if query or postal code
+    try {
+      const searchTarget = postal || query;
+      const oneMapUrl = `https://www.onemap.gov.sg/api/common/elastic/search?searchVal=${encodeURIComponent(searchTarget)}&returnGeom=Y&getAddrDetails=Y&pageNum=1`;
+      
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 2000); // 2s timeout
+      
+      const response = await fetch(oneMapUrl, { signal: controller.signal });
+      clearTimeout(timeout);
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.results && data.results.length > 0) {
+          const oneMapDestinations = data.results.slice(0, 8).map((r: any, idx: number) => {
+            const bldgName = r.BUILDING && r.BUILDING !== 'NIL' ? r.BUILDING : r.SEARCHVAL || 'Singapore Location';
+            const road = r.ROAD_NAME && r.ROAD_NAME !== 'NIL' ? r.ROAD_NAME : '';
+            const blk = r.BLK_NO && r.BLK_NO !== 'NIL' ? `Blk ${r.BLK_NO} ` : '';
+            const postCode = r.POSTAL && r.POSTAL !== 'NIL' ? r.POSTAL : postal || '';
+            const fullAddress = `${blk}${road}${postCode ? `, Singapore ${postCode}` : ', Singapore'}`;
+
+            return {
+              id: `onemap-${r.POSTAL || idx}-${Date.now()}`,
+              name: postCode ? `${bldgName} (${postCode})` : bldgName,
+              address: fullAddress,
+              postalCode: postCode || undefined,
+              latitude: parseFloat(r.LATITUDE),
+              longitude: parseFloat(r.LONGITUDE),
+              category: 'other' as const
+            };
+          });
+
+          return res.json({
+            destinations: oneMapDestinations,
+            source: 'OneMap'
+          });
+        }
+      }
+    } catch (e) {
+      // Gracefully continue to internal postal sector & database lookup
+    }
+
+    // Internal postal code database & sector centroids fallback
+    const matches = searchDestinationsAndPostalCodes(query);
+    res.json({
+      destinations: matches,
+      source: 'Internal'
+    });
   });
 
   // 4. Nearby Food & Merchant Deals

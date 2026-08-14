@@ -76,9 +76,10 @@ export interface Destination {
   id: string;
   name: string;
   address: string;
+  postalCode?: string;
   latitude: number;
   longitude: number;
-  category?: 'shopping' | 'business' | 'attraction' | 'transit' | 'residential';
+  category?: 'shopping' | 'business' | 'attraction' | 'transit' | 'residential' | 'other';
 }
 
 export interface SavedDestination {
